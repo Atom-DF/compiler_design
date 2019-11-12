@@ -326,9 +326,12 @@ TOKEN getNextToken() {
     return CurTok = temp;
 }
 
-static void putBackToken(TOKEN tok) { tok_buffer.push_front(tok); }
+void putBackToken(TOKEN tok) {
+    tok_buffer.push_front(CurTok);
+    CurTok = tok;
+}
 
-// The AST nodes are moved into their own .cpp/.h files.
+// The AST nodes were moved into their own .cpp/.h files.
 
 //===----------------------------------------------------------------------===//
 // Code Generation
@@ -344,7 +347,7 @@ static unique_ptr <Module> TheModule;
 
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os,
                                      const ASTnode &ast) {
-    os << ast.to_string();
+    os << ast.to_string("", true);
     return os;
 }
 

@@ -102,6 +102,8 @@ extern int lineNo, columnNo;
 extern TOKEN CurTok;
 extern std::deque <TOKEN> tok_buffer;
 
+extern void putBackToken(TOKEN tok);
+
 TOKEN getNextToken();
 
 #endif //CODE_MCCOMP_H

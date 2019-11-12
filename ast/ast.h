@@ -20,11 +20,69 @@ public:
 
     virtual llvm::Value *codegen() = 0;
 
-    virtual std::string to_string() const = 0;
+    virtual std::string to_string(std::string prefix, bool last) const = 0;
+};
+
+class BlockASTnode;
+
+// expr (abstract)
+class ExprASTnode : public ASTnode {
+public:
+    ExprASTnode() {}
+
+    virtual llvm::Value *codegen() override {};
+
+    virtual std::string to_string(std::string prefix, bool last) const override;
+};
+
+// Half completed binary
+class HalfASTnode : public ExprASTnode {
+public:
+    TOKEN Op;
+    std::unique_ptr<ExprASTnode> Expr;
+public:
+    HalfASTnode(TOKEN op, std::unique_ptr<ExprASTnode> expr):
+    Op(op), Expr(std::move(expr)) {}
+};
+
+// empty, used to signal it was an epsilon to the parser
+class EmptyASTnode : public ExprASTnode {
+public:
+    EmptyASTnode() {}
+
+    virtual llvm::Value *codegen() override {};
+
+    virtual std::string to_string(std::string prefix, bool last) const override;
+};
+
+// binary operator
+class BinaryASTnode : public ExprASTnode {
+    TOKEN Op;
+    std::unique_ptr<ExprASTnode> Left;
+    std::unique_ptr<ExprASTnode> Right;
+public:
+    BinaryASTnode(std::unique_ptr<ExprASTnode> left, TOKEN op, std::unique_ptr<ExprASTnode> right)
+    : Op(op), Left(std::move(left)), Right(std::move(right)) {}
+
+    BinaryASTnode(std::unique_ptr<ExprASTnode> expr, std::unique_ptr<HalfASTnode> half) :
+    BinaryASTnode(std::move(expr), half->Op, move(half->Expr)) {}
+
+    virtual llvm::Value *codegen() override {};
+
+    virtual std::string to_string(std::string prefix, bool last) const override;
+};
+
+// unary operator
+class UnaryASTnode : public ExprASTnode {
+    TOKEN Op;
+    std::unique_ptr<ExprASTnode> Expr;
+public:
+    UnaryASTnode(TOKEN op, std::unique_ptr<ExprASTnode> expr)
+            : Op(op), Expr(std::move(expr)) {}
 };
 
 /// IntASTnode - Class for integer literals like 1, 2, 10.
-class IntASTnode : public ASTnode {
+class IntASTnode : public ExprASTnode {
     int Val;
     TOKEN Tok;
     std::string Name;
@@ -39,7 +97,7 @@ public:
 };
 
 /// FloatASTnode - Class for float literals like 1.0, 0.22, 12.05.
-class FloatASTnode : public ASTnode {
+class FloatASTnode : public ExprASTnode {
     double Val;
     TOKEN Tok;
     std::string Name;
@@ -54,7 +112,7 @@ public:
 };
 
 /// IntASTnode - Class for integer literals like 1, 2, 10.
-class BoolASTnode : public ASTnode {
+class BoolASTnode : public ExprASTnode {
     bool Val;
     TOKEN Tok;
     std::string Name;
@@ -68,165 +126,277 @@ public:
     //};
 };
 
-/// IdentASTnode - Class for the type of a function.
-class IdentASTnode : public ASTnode {
-    TOKEN Tok;
-    std::string Name;
+// ident
+class IdentASTnode : public ExprASTnode {
+public:
+    TOKEN Token;
 
 public:
-    IdentASTnode(TOKEN tok, std::string name) : Name(name), Tok(tok) {}
-
-    virtual llvm::Value *codegen() override {}
-
-    virtual std::string to_string() const override;
-};
-
-/// TypeASTnode - Class for the type of a function or variable.
-class TypeASTnode : public ASTnode {
-    TOKEN Tok;
-    std::string Type;
-
-public:
-    TypeASTnode(TOKEN tok, std::string type) : Type(type), Tok(tok) {}
+    IdentASTnode(TOKEN token) : Token(token) {}
 
     virtual llvm::Value *codegen() override {};
 
-    virtual std::string to_string() const override;
+    virtual std::string to_string(std::string prefix, bool last) const override;
 };
 
-/// ParamASTnode - Class for a parameter.
+// function calls
+class Ident_funASTnode : public IdentASTnode {
+    std::vector<std::unique_ptr<ExprASTnode>> Arguments;
+    bool Isfun = false;
+
+public:
+    Ident_funASTnode(std::unique_ptr<IdentASTnode> ident, std::vector<std::unique_ptr<ExprASTnode>> arguments) :
+    IdentASTnode(ident->Token), Arguments(std::move(arguments)) {}
+
+    virtual llvm::Value *codegen() override {};
+
+    virtual std::string to_string(std::string prefix, bool last) const override;
+};
+
+// type
+class TypeASTnode : public ASTnode {
+public:
+    TypeASTnode() {}
+
+    virtual llvm::Value *codegen() override {};
+
+    virtual std::string to_string(std::string prefix, bool last) const override;
+};
+
+// fun_type
+class Fun_TypeASTnode : public TypeASTnode {
+    TOKEN Token;
+public:
+    Fun_TypeASTnode(TOKEN token) : Token(token) {}
+
+    virtual llvm::Value *codegen() override {};
+
+    virtual std::string to_string(std::string prefix, bool last) const override;
+};
+
+// var_type
+class Var_TypeASTnode : public TypeASTnode {
+    TOKEN Token;
+public:
+    Var_TypeASTnode(TOKEN token) : Token(token) {}
+
+    virtual llvm::Value *codegen() override {};
+
+    virtual std::string to_string(std::string prefix, bool last) const override;
+};
+
+// param
 class ParamASTnode : public ASTnode {
     std::unique_ptr<TypeASTnode> Type;
     std::unique_ptr<IdentASTnode> Ident;
+
 public:
-    ParamASTnode(std::unique_ptr<TypeASTnode> type, std::unique_ptr<IdentASTnode> ident) : Type(std::move(type)), Ident(std::move(ident)) {}
+    ParamASTnode(std::unique_ptr<TypeASTnode> type, std::unique_ptr<IdentASTnode> ident)
+    : Type(move(type)), Ident(move(ident)) {}
 
     virtual llvm::Value *codegen() override {};
 
-    virtual std::string to_string() const override;
+    virtual std::string to_string(std::string prefix, bool last) const override;
 };
 
-/// ParamsASTnode - Class which contains a std::vector of ParamASTnode.
+// params
 class ParamsASTnode : public ASTnode {
-    bool Empty;
-    bool Void;
     std::vector<std::unique_ptr<ParamASTnode>> Params;
+    bool Empty; // or void
+    bool Isvoid;
+
 public:
-    ParamsASTnode( bool empty, bool _void, std::vector<std::unique_ptr<ParamASTnode>> params) : Empty(std::move(empty)), Void(std::move(_void)), Params(std::move(params)) {}
+    ParamsASTnode(bool empy_or_void) : Empty(empy_or_void), Isvoid(!empy_or_void) {}
+
+    ParamsASTnode(std::vector<std::unique_ptr<ParamASTnode>> params) :
+    Params(std::move(params)), Empty(false), Isvoid(false) {}
 
     virtual llvm::Value *codegen() override {};
 
-    virtual std::string to_string() const override;
+    virtual std::string to_string(std::string prefix, bool last) const override;
 };
 
-/// Fun_PrototypeASTnode - Class which contains the prototype of a function.
-class Fun_PrototypeASTnode : public ASTnode {
+// externs
+class ExternASTnode : public ASTnode {
     std::unique_ptr<TypeASTnode> Type;
     std::unique_ptr<IdentASTnode> Ident;
     std::unique_ptr<ParamsASTnode> Params;
 
 public:
-    Fun_PrototypeASTnode(std::unique_ptr<TypeASTnode> type, std::unique_ptr<IdentASTnode> ident, std::unique_ptr<ParamsASTnode> params) : Type(std::move(type)), Ident(std::move(ident)), Params(std::move(params)) {}
-
-    virtual llvm::Value *codegen() override {}
-
-    virtual std::string to_string() const override;
-};
-
-/// Fun_PrototypesASTnode - Class which contains a std::vector of Fun_PrototypeASTnode.
-class Fun_PrototypesASTnode : public ASTnode {
-    std::vector<std::unique_ptr<Fun_PrototypeASTnode>> Externs;
-
-public:
-    Fun_PrototypesASTnode(std::vector<std::unique_ptr<Fun_PrototypeASTnode>> externs) : Externs(std::move(externs)) {}
+    ExternASTnode(std::unique_ptr<TypeASTnode> type, std::unique_ptr<IdentASTnode> ident, std::unique_ptr<ParamsASTnode> params) :
+    Type(std::move(type)), Ident(std::move(ident)), Params(std::move(params)) {}
 
     virtual llvm::Value *codegen() override {};
 
-    virtual std::string to_string() const override;
+    virtual std::string to_string(std::string prefix, bool last) const override;
 };
 
-/// Local_DeclASTnode - Class which contains a std::vector of Fun_PrototypeASTnode.
-class DeclASTnode : public ASTnode {
+// list of externs
+class Extern_listASTnode : public ASTnode {
+    std::vector<std::unique_ptr<ExternASTnode>> Extern_list;
+
+public:
+    Extern_listASTnode(std::vector<std::unique_ptr<ExternASTnode>> extern_list) : Extern_list(std::move(extern_list)) {}
+
+    virtual llvm::Value *codegen() override {};
+
+    virtual std::string to_string(std::string prefix, bool last) const override;
+};
+
+//-------------------------------------------------------------------------------------------
+
+// stmt
+class StmtASTnode : public ASTnode {
+public:
+    StmtASTnode() {}
+
+    virtual llvm::Value *codegen() override {};
+
+    virtual std::string to_string(std::string prefix, bool last) const override;
+};
+
+// expr_stmt
+class Expr_stmtASTnode : StmtASTnode {
+    std::unique_ptr<ExprASTnode> Expr;
+    bool Empty = false;
+public:
+    Expr_stmtASTnode() : Empty(true) {}
+
+    Expr_stmtASTnode(std::unique_ptr<ExprASTnode> expr) : Expr(std::move(expr)) {}
+
+    virtual llvm::Value *codegen() override {};
+
+    virtual std::string to_string(std::string prefix, bool last) const override;
+};
+
+// if_stmt
+class If_stmtASTnode : StmtASTnode {
+    std::unique_ptr<ExprASTnode> Expr;
+    std::unique_ptr<BlockASTnode> Ifblock;
+    std::unique_ptr<BlockASTnode> Elseblock;
+    bool Haselse = false;
+public:
+    If_stmtASTnode(std::unique_ptr<ExprASTnode> expr, std::unique_ptr<BlockASTnode> ifblock) :
+    Expr(std::move(expr)), Ifblock(std::move(ifblock)) {}
+
+    If_stmtASTnode(std::unique_ptr<ExprASTnode> expr, std::unique_ptr<BlockASTnode> ifblock, std::unique_ptr<BlockASTnode> elseblock) :
+    Expr(std::move(expr)), Ifblock(std::move(ifblock)), Elseblock(std::move(elseblock)), Haselse(true) {}
+
+    virtual llvm::Value *codegen() override {};
+
+    virtual std::string to_string(std::string prefix, bool last) const override;
+};
+
+// while_stmt
+class While_stmtASTnode : StmtASTnode {
+    std::unique_ptr<ExprASTnode> Expr;
+    std::unique_ptr<StmtASTnode> Stmt;
+public:
+    While_stmtASTnode(std::unique_ptr<ExprASTnode> expr, std::unique_ptr<StmtASTnode> stmt) :
+    Expr(std::move(expr)), Stmt(std::move(stmt)) {}
+
+    virtual llvm::Value *codegen() override {};
+
+    virtual std::string to_string(std::string prefix, bool last) const override;
+};
+
+// return_stmt
+class Return_stmtASTnode : StmtASTnode {
+    std::unique_ptr<ExprASTnode> Expr;
+    bool Empty = false;
+public:
+    Return_stmtASTnode() : Empty(true) {}
+
+    Return_stmtASTnode(std::unique_ptr<ExprASTnode> expr) : Expr(std::move(expr)) {}
+
+    virtual llvm::Value *codegen() override {};
+
+    virtual std::string to_string(std::string prefix, bool last) const override;
+};
+
+// local_decl
+class Local_declASTnode : public ASTnode {
     std::unique_ptr<TypeASTnode> Type;
     std::unique_ptr<IdentASTnode> Ident;
-
 public:
-    DeclASTnode(std::unique_ptr<TypeASTnode> type, std::unique_ptr<IdentASTnode> ident) : Type(std::move(type)), Ident(std::move(ident)) {}
+    Local_declASTnode(std::unique_ptr<TypeASTnode> type, std::unique_ptr<IdentASTnode> ident) :
+    Type(std::move(type)), Ident(std::move(ident)) {}
 
     virtual llvm::Value *codegen() override {};
 
-    virtual std::string to_string() const override;
+    virtual std::string to_string(std::string prefix, bool last) const override;
 };
 
-/// Local_DeclsASTnode - Class which contains a std::vector of Fun_PrototypeASTnode.
-class Local_DeclsASTnode : public ASTnode {
-    std::vector<std::unique_ptr<DeclASTnode>> Local_decls;
-    bool Empty;
+// block
+class BlockASTnode : public StmtASTnode {
+    std::vector<std::unique_ptr<Local_declASTnode>> Local_decl_list;
+    std::vector<std::unique_ptr<StmtASTnode>> Stmt_list;
+    bool Empty = false; // used in else_stmt
 
 public:
-    Local_DeclsASTnode(std::vector<std::unique_ptr<DeclASTnode>> local_decls) : Local_decls(std::move(local_decls)), Empty(false) {}
+    BlockASTnode(std::vector<std::unique_ptr<Local_declASTnode>> local_decl_list, std::vector<std::unique_ptr<StmtASTnode>> stmt_list) :
+            Local_decl_list(std::move(local_decl_list)), Stmt_list(std::move(stmt_list)) {}
 
-    Local_DeclsASTnode() : Empty(true) {}
+    BlockASTnode() : Empty(true) {}
 
     virtual llvm::Value *codegen() override {};
 
-    virtual std::string to_string() const override;
+    virtual std::string to_string(std::string prefix, bool last) const override;
+
+    std::string decl_to_string(std::string prefix, bool last) const;
+
+    std::string stmt_to_string(std::string prefix, bool last) const;
 };
 
-/// BlockASTnode - Class which contains a std::vector of Fun_PrototypeASTnode.
-class BlockASTnode : public ASTnode {
-    std::unique_ptr<Local_DeclsASTnode> Local_decl;
-
+// decl
+class DeclASTnode : public ASTnode {
 public:
-    BlockASTnode(std::unique_ptr<Local_DeclsASTnode> local_decl) : Local_decl(std::move(local_decl)) {}
+    DeclASTnode() {}
 
     virtual llvm::Value *codegen() override {};
 
-    virtual std::string to_string() const override;
+    virtual std::string to_string(std::string prefix, bool last) const override;
 };
 
-class DeclarationASTnode : public ASTnode {
-public:
-    DeclarationASTnode() {}
-
-    virtual llvm::Value *codegen() override {};
-
-    virtual std::string to_string() const override;
-};
-
-/// Fun_DeclASTnode - Class which contains a std::vector of Fun_PrototypeASTnode.
-class Fun_DeclASTnode : public DeclarationASTnode {
-    std::unique_ptr<Fun_PrototypeASTnode> Prototype;
+// fun_decl
+class Fun_DeclASTnode : public DeclASTnode {
+    std::unique_ptr<TypeASTnode> Type;
+    std::unique_ptr<IdentASTnode> Ident;
+    std::unique_ptr<ParamsASTnode> Params;
     std::unique_ptr<BlockASTnode> Block;
 
 public:
-    Fun_DeclASTnode(std::unique_ptr<Fun_PrototypeASTnode> prototype, std::unique_ptr<BlockASTnode> block) : Prototype(std::move(prototype)), Block(std::move(block)) {}
+    Fun_DeclASTnode(std::unique_ptr<TypeASTnode> type, std::unique_ptr<IdentASTnode> ident, std::unique_ptr<ParamsASTnode> params, std::unique_ptr<BlockASTnode> block) :
+    Type(std::move(type)), Ident(std::move(ident)), Params(std::move(params)), Block(std::move(block)) {}
 
     virtual llvm::Value *codegen() override {};
 
-    virtual std::string to_string() const override;
+    virtual std::string to_string(std::string prefix, bool last) const override;
 };
 
-class DeclarationsASTnode : public ASTnode {
-    std::vector<std::unique_ptr<DeclarationASTnode>> Declarations;
-
-public:
-    DeclarationsASTnode(std::vector<std::unique_ptr<DeclarationASTnode>> declarations) : Declarations(std::move(declarations)) {}
-
-    virtual llvm::Value *codegen() override {};
-
-    virtual std::string to_string() const override;
-};
-
-class Var_DeclASTnode : public DeclarationASTnode {
+// var_decl
+class Var_DeclASTnode : public DeclASTnode {
     std::unique_ptr<TypeASTnode> Type;
     std::unique_ptr<IdentASTnode> Ident;
 public:
-    Var_DeclASTnode(std::unique_ptr<TypeASTnode> type, std::unique_ptr<IdentASTnode> ident) : Type(std::move(type)), Ident(std::move(ident)) {}
+    Var_DeclASTnode(std::unique_ptr<TypeASTnode> type, std::unique_ptr<IdentASTnode> ident) :
+    Type(std::move(type)), Ident(std::move(ident)) {}
 
     virtual llvm::Value *codegen() override {};
 
-    virtual std::string to_string() const override;
+    virtual std::string to_string(std::string prefix, bool last) const override;
+};
+
+//list of decls
+class Decl_listASTnode : public ASTnode {
+    std::vector<std::unique_ptr<DeclASTnode>> Decl_list;
+
+public:
+    Decl_listASTnode(std::vector<std::unique_ptr<DeclASTnode>> decl_list) : Decl_list(std::move(decl_list)) {}
+
+    virtual llvm::Value *codegen() override {};
+
+    virtual std::string to_string(std::string prefix, bool last) const override;
 };
 
 #endif //CODE_AST_H
