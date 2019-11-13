@@ -68,10 +68,19 @@ class BinaryASTnode : public ExprASTnode {
     ExprASTnode* Right;
 public:
     BinaryASTnode(ExprASTnode* left, TOKEN op, ExprASTnode* right)
-    : Op(op), Left((left)), Right((right)) {}
+    : Op(op), Left((left)), Right((right)) {
+        std::cout << "used left and right\n";
+        op.print_as_string();
+        std::cout << left->to_string("6", true);
+        std::cout << right->to_string("7", true);
+    }
 
     BinaryASTnode(ExprASTnode* expr, HalfASTnode* half) :
-    BinaryASTnode((expr), half->Op, half->Expr) {}
+    BinaryASTnode((expr), half->Op, half->Expr) {
+        std::cout << "used half\n";
+        std::cout << expr->to_string("8", true);
+        std::cout << half->to_string("9", true);
+    }
 
     virtual llvm::Value *codegen() override {};
 
