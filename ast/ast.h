@@ -30,9 +30,9 @@ class BlockASTnode;
 // expr (abstract)
 class ExprASTnode : public ASTnode {
 public:
-    bool isEmpty = false;
-
     ExprASTnode() {}
+
+    virtual bool isEmpty() = 0;
 
     virtual llvm::Value *codegen() override {};
 
@@ -48,6 +48,8 @@ public:
     HalfASTnode(TOKEN op, ExprASTnode* expr):
     Op(op), Expr(expr) {}
 
+    virtual bool isEmpty() override {return false;};
+
     virtual llvm::Value *codegen() override {};
 
     virtual std::string to_string(std::string prefix, bool last) const override;
@@ -56,9 +58,9 @@ public:
 // empty, used to signal it was an epsilon to the parser
 class EmptyASTnode : public ExprASTnode {
 public:
-    bool isEmpty = true;
-
     EmptyASTnode() {}
+
+    virtual bool isEmpty() override {return true;};
 
     virtual llvm::Value *codegen() override {};
 
@@ -87,6 +89,8 @@ public:
         BinaryASTnode(expr, half->Op, half->Expr);
     }
 
+    virtual bool isEmpty() override {return false;};
+
     virtual llvm::Value *codegen() override {};
 
     virtual std::string to_string(std::string prefix, bool last) const override;
@@ -99,6 +103,8 @@ class UnaryASTnode : public ExprASTnode {
 public:
     UnaryASTnode(TOKEN op, ExprASTnode* expr)
             : Op(op), Expr((expr)) {}
+
+    virtual bool isEmpty() override {return false;};
 
     virtual llvm::Value *codegen() override {};
 
@@ -114,6 +120,8 @@ class IntASTnode : public ExprASTnode {
 public:
     IntASTnode(TOKEN tok, int val) : Val(val), Tok(tok) {}
 
+    virtual bool isEmpty() override {return false;};
+
     virtual llvm::Value *codegen() override {};
 
     virtual std::string to_string(std::string prefix, bool last) const override;
@@ -127,6 +135,8 @@ class FloatASTnode : public ExprASTnode {
 
 public:
     FloatASTnode(TOKEN tok, double val) : Val(val), Tok(tok) {}
+
+    virtual bool isEmpty() override {return false;};
 
     virtual llvm::Value *codegen() override {};
 
@@ -142,6 +152,8 @@ class BoolASTnode : public ExprASTnode {
 public:
     BoolASTnode(TOKEN tok, bool val) : Val(val), Tok(tok) {}
 
+    virtual bool isEmpty() override {return false;};
+
     virtual llvm::Value *codegen() override {};
 
     virtual std::string to_string(std::string prefix, bool last) const override;
@@ -154,6 +166,8 @@ public:
 
 public:
     IdentASTnode(TOKEN token) : Token(token) {}
+
+    virtual bool isEmpty() override {return false;};
 
     virtual llvm::Value *codegen() override {};
 
