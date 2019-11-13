@@ -30,6 +30,8 @@ class BlockASTnode;
 // expr (abstract)
 class ExprASTnode : public ASTnode {
 public:
+    bool isEmpty = false;
+
     ExprASTnode() {}
 
     virtual llvm::Value *codegen() override {};
@@ -54,6 +56,8 @@ public:
 // empty, used to signal it was an epsilon to the parser
 class EmptyASTnode : public ExprASTnode {
 public:
+    bool isEmpty = true;
+
     EmptyASTnode() {}
 
     virtual llvm::Value *codegen() override {};
@@ -75,11 +79,12 @@ public:
         std::cout << right->to_string("7", true);
     }
 
-    BinaryASTnode(ExprASTnode* expr, HalfASTnode* half) :
-    BinaryASTnode((expr), half->Op, half->Expr) {
+    BinaryASTnode(ExprASTnode* expr, HalfASTnode* half)
+     {
         std::cout << "used half\n";
         std::cout << expr->to_string("8", true);
         std::cout << half->to_string("9", true);
+        BinaryASTnode(expr, half->Op, half->Expr);
     }
 
     virtual llvm::Value *codegen() override {};

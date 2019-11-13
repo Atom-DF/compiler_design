@@ -253,7 +253,7 @@ ExprASTnode* parser_rval_add_() {
         getNextToken();
         auto rval = parser_rval_mul();
         auto rval_ = parser_rval_add_();
-        if (typeid(*rval_) == typeid(EmptyASTnode))
+        if (rval_->isEmpty)
             return new HalfASTnode(op, rval);
         auto expr = new BinaryASTnode(rval, static_cast<HalfASTnode*>(rval_));
         return new HalfASTnode(op, expr);
@@ -266,7 +266,7 @@ ExprASTnode* parser_rval_add_() {
 ExprASTnode* parser_rval_add() {
     auto rval = parser_rval_mul();
     auto rval_ = parser_rval_add_();
-    if (typeid(*rval_) == typeid(EmptyASTnode))
+    if (rval_->isEmpty)
         return rval;
     return new BinaryASTnode(rval, static_cast<HalfASTnode*>(rval_));
 }
@@ -293,7 +293,7 @@ ExprASTnode* parser_rval_comp_() {
 ExprASTnode* parser_rval_comp() {
     auto rval = parser_rval_add();
     auto rval_ = parser_rval_comp_();
-    if (typeid(*rval_) == typeid(EmptyASTnode))
+    if (rval_->isEmpty)
         return rval;
     return new BinaryASTnode(rval, static_cast<HalfASTnode*>(rval_));
 }
@@ -320,7 +320,9 @@ ExprASTnode* parser_rval_eq_() {
 ExprASTnode* parser_rval_eq() {
     auto rval = parser_rval_comp();
     auto rval_ = parser_rval_eq_();
-    if (typeid(*rval) == typeid(EmptyASTnode))
+//    cout << typeid(*rval_) <<"\n";
+//    cout << typeid(EmptyASTnode) <<"\n";
+    if (rval_->isEmpty)
         return rval;
     return new BinaryASTnode(rval, static_cast<HalfASTnode*>(rval_));
 }
@@ -334,7 +336,7 @@ ExprASTnode* parser_rval_and_() {
         getNextToken();
         auto rval = parser_rval_eq();
         auto rval_ = parser_rval_and_();
-        if (typeid(*rval_) == typeid(EmptyASTnode*))
+        if (rval_->isEmpty)
             return new HalfASTnode(op, rval);
         auto expr = new BinaryASTnode(rval, static_cast<HalfASTnode*>(rval_));
         return new HalfASTnode(op, expr);
@@ -361,7 +363,7 @@ ExprASTnode* parser_rval_or_() {
         getNextToken();
         auto rval = parser_rval_or();
         auto rval_ = parser_rval_or_();
-        if (typeid(*rval_) == typeid(EmptyASTnode*))
+        if (rval_->isEmpty)
             return new HalfASTnode(op, rval);
         auto expr = new BinaryASTnode(rval, static_cast<HalfASTnode*>(rval_));
         return new HalfASTnode(op, expr);
@@ -388,7 +390,7 @@ ExprASTnode* parser_rval_() {
         getNextToken();
         auto rval = parser_rval_or();
         auto rval_ = parser_rval_();
-        if (typeid(*rval_) == typeid(EmptyASTnode*))
+        if (rval_->isEmpty)
             return new HalfASTnode(op, rval);
         auto expr = new BinaryASTnode(rval, static_cast<HalfASTnode*>(rval_));
         return new HalfASTnode(op, expr);
@@ -656,6 +658,9 @@ void parser() {
     Extern_listASTnode* extern_list;
     Decl_listASTnode* decl_list;
     getNextToken();
+//    auto temp = new EmptyASTnode();
+//    if (typeid(*temp) == typeid(EmptyASTnode))
+//        cout << "true";
     if (CurTok.type == EXTERN)
         extern_list = parser_extern_list();
     decl_list = parser_decl_list();

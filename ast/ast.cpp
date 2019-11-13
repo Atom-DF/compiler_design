@@ -13,7 +13,6 @@ string HalfASTnode::to_string(string prefix, bool last) const {
     string temp;
     temp += prefix;
     temp += (last ? "└──" : "├──" );
-    temp += "Ident: ";
     temp += "HalfASTnode\n";
     return temp;
 }
@@ -31,7 +30,6 @@ string EmptyASTnode::to_string(string prefix, bool last) const {
     string temp;
     temp += prefix;
     temp += (last ? "└──" : "├──" );
-    temp += "Ident: ";
     temp += "EmptyASTnode\n";
     return temp;
 }
