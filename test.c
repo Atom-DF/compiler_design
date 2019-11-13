@@ -13,8 +13,7 @@ int addition(int n, int m) {
     int wefwfe;
     int resgwgergeult;
 
-    if (n == 4) {
-        int hel;
-        print_int();
+    while (hello) {
+        return 5;
     }
 }

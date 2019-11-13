@@ -35,39 +35,24 @@ string EmptyASTnode::to_string(string prefix, bool last) const {
 }
 
 string BinaryASTnode::to_string(string prefix, bool last) const {
-    string temp = "";
-    cout << prefix;
-    cout << (last ? "└──" : "├──" );
-    cout << "BinaryASTnode:" + Op.lexeme;
-    cout << "\n";
-    cout << Left->to_string(prefix + (last ? "    " : "│   "), false);
-    cout << Right->to_string(prefix + (last ? "    " : "│   "), true);
+    string temp;
+    temp += prefix;
+    temp += (last ? "└──" : "├──" );
+    temp += "BinaryASTnode:" + Op.lexeme;
+    temp += "\n";
+    temp += Left->to_string(prefix + (last ? "    " : "│   "), false);
+    temp += Right->to_string(prefix + (last ? "    " : "│   "), true);
     return temp;
-//    string temp;
-//    temp += prefix;
-//    temp += (last ? "└──" : "├──" );
-//    temp += "BinaryASTnode:" + Op.lexeme;
-//    temp += "\n";
-//    temp += Left->to_string(prefix + (last ? "    " : "│   "), false);
-//    temp += Right->to_string(prefix + (last ? "    " : "│   "), true);
-//    return temp;
 }
 
 string UnaryASTnode::to_string(string prefix, bool last) const {
-    string temp = "";
-    cout << prefix;
-    cout << (last ? "└──" : "├──" );
-    cout << "UnaryASTnode:" + Op.lexeme;
-    cout << "\n";
-    cout << Expr->to_string(prefix + (last ? "    " : "│   "), true);
+    string temp;
+    temp += prefix;
+    temp += (last ? "└──" : "├──" );
+    temp += "UnaryASTnode:" + Op.lexeme;
+    temp += "\n";
+    temp += Expr->to_string(prefix + (last ? "    " : "│   "), true);
     return temp;
-//    string temp;
-//    temp += prefix;
-//    temp += (last ? "└──" : "├──" );
-//    temp += "UnaryASTnode:" + Op.lexeme;
-//    temp += "\n";
-//    temp += Expr->to_string(prefix + (last ? "    " : "│   "), true);
-//    return temp;
 }
 
 string IntASTnode::to_string(string prefix, bool last) const {

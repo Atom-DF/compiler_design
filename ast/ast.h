@@ -74,20 +74,10 @@ class BinaryASTnode : public ExprASTnode {
     ExprASTnode* Right;
 public:
     BinaryASTnode(ExprASTnode* left, TOKEN op, ExprASTnode* right)
-    : Op(op), Left((left)), Right((right)) {
-        std::cout << "used left and right\n";
-        op.print_as_string();
-        std::cout << left->to_string("6", true);
-        std::cout << right->to_string("7", true);
-    }
+    : Op(op), Left((left)), Right((right)) {}
 
-    BinaryASTnode(ExprASTnode* expr, HalfASTnode* half)
-     {
-        std::cout << "used half\n";
-        std::cout << expr->to_string("8", true);
-        std::cout << half->to_string("9", true);
-        BinaryASTnode(expr, half->Op, half->Expr);
-    }
+    BinaryASTnode(ExprASTnode* expr, HalfASTnode* half) :
+    BinaryASTnode(expr, half->Op, half->Expr) {}
 
     virtual bool isEmpty() override {return false;};
 
@@ -369,9 +359,8 @@ public:
 class BlockASTnode : public StmtASTnode {
     std::vector<Local_declASTnode*> Local_decl_list;
     std::vector<StmtASTnode*> Stmt_list;
-    bool Empty = false; // used in else_stmt
-
 public:
+    bool Empty = false; // used in else_stmt
     BlockASTnode(std::vector<Local_declASTnode*> local_decl_list, std::vector<StmtASTnode*> stmt_list) :
             Local_decl_list((local_decl_list)), Stmt_list((stmt_list)) {}
 

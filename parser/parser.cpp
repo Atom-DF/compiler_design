@@ -347,7 +347,7 @@ ExprASTnode* parser_rval_and_() {
 ExprASTnode* parser_rval_and() {
     auto rval = parser_rval_eq();
     auto rval_ = parser_rval_and_();
-    if (typeid(*rval) == typeid(EmptyASTnode))
+    if (rval_->isEmpty())
         return rval;
     return new BinaryASTnode(rval, static_cast<HalfASTnode*>(rval_));
 }
@@ -374,7 +374,7 @@ ExprASTnode* parser_rval_or_() {
 ExprASTnode* parser_rval_or() {
     auto rval = parser_rval_and();
     auto rval_ = parser_rval_or_();
-    if (typeid(*rval) == typeid(EmptyASTnode))
+    if (rval_->isEmpty())
         return rval;
     return new BinaryASTnode(rval, static_cast<HalfASTnode*>(rval_));
 }
@@ -401,7 +401,7 @@ ExprASTnode* parser_rval_() {
 ExprASTnode* parser_rval() {
     auto rval_or = parser_rval_or();
     auto rval_ = parser_rval_();
-    if (typeid(*rval_) == typeid(EmptyASTnode*))
+    if (rval_->isEmpty())
         return rval_or;
     return new BinaryASTnode(rval_or, static_cast<HalfASTnode*>(rval_));
 }
@@ -416,25 +416,16 @@ ExprASTnode* parser_expr() {
         putBackToken(temp);
 //      Carefull doing somehting dangerous here... might break maybe
         auto ident = parser_ident();
-        cout << ident->to_string("hello1", true);
         TOKEN op;
         if (CurTok.type == EQ) {
             op = CurTok;
             getNextToken();
         }
         auto expr = parser_expr();
-        cout << "printing expr\n";
-        cout << expr->to_string("hello2", true);
         return new BinaryASTnode(ident, op, expr);
     }
     putBackToken(temp);
-    CurTok.print_as_string();
-    cout << "before expr\n";
-    auto temp2 = parser_rval();
-    cout << "after expr\n";
-    cout << temp2->to_string("hello3", true);
-    cout << "after print\n";
-    return temp2;
+    return parser_rval();
 }
 
 // EXPR_STMT -> ; | EXPR ;
@@ -477,6 +468,9 @@ If_stmtASTnode* parser_if_stmt() {
 
     auto else_block = parser_else_stmt();
 
+    if (else_block->Empty)
+        return new If_stmtASTnode(expr, if_block);
+
     return new If_stmtASTnode(expr, if_block, else_block);
 }
 
@@ -502,6 +496,8 @@ Return_stmtASTnode* parser_return_stmt_() {
     if (CurTok.type == SC)
         return new Return_stmtASTnode();
     auto expr = parser_expr();
+    if (CurTok.type == SC)
+        getNextToken();
     return new Return_stmtASTnode(expr);
 }
 
@@ -509,7 +505,6 @@ Return_stmtASTnode* parser_return_stmt_() {
 Return_stmtASTnode* parser_return_stmt() {
     if (CurTok.type == RETURN)
         getNextToken();
-
     return parser_return_stmt_();
 }
 
@@ -527,22 +522,15 @@ StmtASTnode* parser_stmt() {
     if (CurTok.type == LBRA)
         return parser_block();
     if (CurTok.type == LPAR or CurTok.type == IDENT or CurTok.type == NOT or CurTok.type == MINUS or CurTok.type == SC)
-    {
-        auto temp = parser_expr_stmt();
-        cout << temp->to_string("hello5", true);
-        return temp;
-    }
+        return parser_expr_stmt();
 }
 
 // TODO not recursive
 // STMT_LIST -> STMT STMT_LIST | epsilon
 vector<StmtASTnode*> parser_stmt_list() {
     vector<StmtASTnode*> stmt_list = vector<StmtASTnode*>();
-    while (CurTok.type != RBRA) {
-        auto temp = parser_stmt();
-        cout << temp->to_string("hello6", true);
-        stmt_list.push_back(temp);
-    }
+    while (CurTok.type != RBRA)
+        stmt_list.push_back(parser_stmt());
     return stmt_list;
 }
 
@@ -656,9 +644,6 @@ void parser() {
     Extern_listASTnode* extern_list;
     Decl_listASTnode* decl_list;
     getNextToken();
-    auto temp = new EmptyASTnode();
-    if (temp->isEmpty())
-        cout << "true\n";
     if (CurTok.type == EXTERN)
         extern_list = parser_extern_list();
     decl_list = parser_decl_list();
