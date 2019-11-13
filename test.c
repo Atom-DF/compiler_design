@@ -12,4 +12,9 @@ int addition(int n, int m) {
     int result;
     int wefwfe;
     int resgwgergeult;
+
+    if (n == 4) {
+        int hel;
+        print_int();
+    }
 }

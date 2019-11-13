@@ -381,7 +381,6 @@ int main(int argc, char **argv) {
 
     // Make the module, which holds all the code.
     TheModule = llvm::make_unique<Module>("mini-c", TheContext);
-
     // Run the parser now.
     parser();
     fprintf(stderr, "Parsing Finished\n");
