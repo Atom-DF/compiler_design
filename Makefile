@@ -2,8 +2,8 @@ CXX=clang++
 CFLAGS=-g -O3 `llvm-config --cxxflags --ldflags --system-libs --libs all` \
 -Wno-unused-function -Wno-unknown-warning-option -ferror-limit=200 -frtti -o mccomp
 
-mccomp: mccomp.cpp ast/ast.cpp parser/parser.cpp exceptions/exceptions.cpp
-	$(CXX) mccomp.cpp ast/ast.cpp parser/parser.cpp exceptions/exceptions.cpp $(CFLAGS)
+mccomp: mccomp.cpp ast/ast.cpp parser/parser.cpp
+	$(CXX) mccomp.cpp ast/ast.cpp parser/parser.cpp $(CFLAGS)
 
 clean:
 	rm -rf mccomp 

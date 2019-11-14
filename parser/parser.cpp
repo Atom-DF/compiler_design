@@ -14,7 +14,6 @@
 #include "parser.h"
 #include "../mccomp.h"
 #include "../ast/ast.h"
-#include "../exceptions/exceptions.h"
 
 using namespace std;
 using namespace llvm;
@@ -225,7 +224,6 @@ ExprASTnode* parser_rval_not() {
     }
 
     if (CurTok.type == IDENT) {
-        CurTok.print_as_string();
         auto ident = parser_ident();
         auto arguments = parser_rval_fun();
         if (arguments.empty())
@@ -408,10 +406,8 @@ ExprASTnode* parser_rval() {
 
 // EXPR -> ident equal EXPR | RVAL
 ExprASTnode* parser_expr() {
-    CurTok.print_as_string();
     auto temp = CurTok;
     getNextToken();
-    CurTok.print_as_string();
     if (CurTok.type == EQ) {
         putBackToken(temp);
 //      Carefull doing somehting dangerous here... might break maybe

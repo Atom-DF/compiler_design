@@ -37,7 +37,6 @@
 #include "ast/ast.h"
 #include "parser/parser.h"
 #include "mccomp.h"
-#include "exceptions/exceptions.h"
 
 using namespace std;
 using namespace llvm;
@@ -324,6 +323,10 @@ TOKEN getNextToken() {
     tok_buffer.pop_front();
 
     return CurTok = temp;
+}
+
+void LogError(std::string) {
+
 }
 
 void putBackToken(TOKEN tok) {

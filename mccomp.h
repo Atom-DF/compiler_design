@@ -102,7 +102,7 @@ extern int lineNo, columnNo;
 extern TOKEN CurTok;
 extern std::deque <TOKEN> tok_buffer;
 
-extern LogError(std::string )
+extern void LogError(std::string);
 
 extern void putBackToken(TOKEN tok);
 
