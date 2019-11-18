@@ -350,6 +350,23 @@ Value *BinaryASTnode::codegen() {
     Value *left_expr = Left->codegen();
     if (!left_expr | !right_expr)
         LogErrorSyntax("Error in the codegen during this operation: ", Op.lexeme);
+
+    if (Op.type == ASSIGN) {
+        if (left_expr->getType() != right_expr->getType())
+            LogErrorSyntax("Error type mismatch during assignment of variable.", Right->to_string("", false) + Left->to_string("", false));
+        Value *Val = Right->codegen();
+        auto ident = static_cast<IdentASTnode *>(Left);
+        if (!Val)
+            LogErrorSyntax("Error calculating the expr to the right for ident: ", ident->Token.lexeme);
+        Value *Variable = Curr_scope[ident->Token.lexeme];
+
+        if (!Variable)
+            LogErrorSyntax("Error variable not declared: ", ident->Token.lexeme);
+
+        Builder.CreateStore(Val, Variable);
+        return Val;
+    }
+
     if ((left_expr->getType() == Type::getFloatTy(TheContext) && right_expr->getType() == Type::getInt32Ty(TheContext)))
         right_expr = Builder.CreateSIToFP(right_expr,Type::getFloatTy(TheContext),"R");
     else if(left_expr->getType() == Type::getInt32Ty(TheContext) && right_expr->getType() == Type::getFloatTy(TheContext))
@@ -386,19 +403,6 @@ Value *BinaryASTnode::codegen() {
                 return Builder.CreateAnd(left_expr,right_expr,"andtmp");
             case OR:
                 return Builder.CreateOr(left_expr,right_expr,"ortmp");
-            case ASSIGN: {
-                Value *Val = Right->codegen();
-                auto ident = static_cast<IdentASTnode *>(Left);
-                if (!Val)
-                    LogErrorSyntax("Error calculating the expr to the right for ident: ", ident->Token.lexeme);
-                Value *Variable = Curr_scope[ident->Token.lexeme];
-
-                if (!Variable)
-                    LogErrorSyntax("Error variable not declared: ", ident->Token.lexeme);
-
-                Builder.CreateStore(Val, Variable);
-                return Val;
-            }
             default:
                 LogErrorSyntax("Error could not find operator: ", Op.lexeme);
         }
