@@ -65,7 +65,8 @@ AllocaInst *CreateEntryBlockAlloca(Function *function, const std::string &lexeme
 }
 
 Value *RootASTnode::codegen(){
-    Extern->codegen();
+    if (Extern)
+        Extern->codegen();
     Decl->codegen();
     return nullptr;
 }
