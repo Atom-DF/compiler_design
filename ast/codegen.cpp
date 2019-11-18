@@ -247,8 +247,11 @@ Value *Local_declASTnode::codegen() {
 
 Value *Return_stmtASTnode::codegen() {
     Value *ReturnVal = Expr->codegen();
-    if(!ReturnVal)
+    if(!ReturnVal) {
+        cout << "this is null omega lol" << "\n";
         return nullptr;
+    }
+    cout << string(ReturnVal->getName()) << "\n";
     return ReturnVal;
 }
 
