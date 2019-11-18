@@ -11,4 +11,5 @@ int addition(int n, int m) {
     int result;
     int wefwfe;
     int resgwgergeult;
+    return result;
 }

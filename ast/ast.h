@@ -281,7 +281,7 @@ public:
 
     virtual llvm::Value *codegen() override {return nullptr;};
 
-    bool return_stmt() {
+    virtual bool return_stmt() {
         return false;
     }
 
@@ -343,7 +343,7 @@ public:
     Return_stmtASTnode(ExprASTnode* expr) : Expr((expr)) {}
 
 //  Used in IR generation
-    bool return_stmt() {
+    bool return_stmt() override {
         return true;
     }
 

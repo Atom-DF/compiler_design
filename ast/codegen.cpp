@@ -226,7 +226,7 @@ Value *BlockASTnode::codegen() {
             return temp;
     }
 
-    return ConstantFP::get(TheContext, APFloat(0.0f));
+    return UndefValue::get(Type::getVoidTy(TheContext));
 }
 
 Value *Local_declASTnode::codegen() {
@@ -246,12 +246,9 @@ Value *Local_declASTnode::codegen() {
 }
 
 Value *Return_stmtASTnode::codegen() {
+    if(Empty)
+        return UndefValue::get(Type::getVoidTy(TheContext));
     Value *ReturnVal = Expr->codegen();
-    if(!ReturnVal) {
-        cout << "this is null omega lol" << "\n";
-        return nullptr;
-    }
-    cout << string(ReturnVal->getName()) << "\n";
     return ReturnVal;
 }
 
