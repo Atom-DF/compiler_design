@@ -297,7 +297,7 @@ public:
 
     Expr_stmtASTnode(ExprASTnode* expr) : Expr((expr)) {}
 
-    virtual llvm::Value *codegen() override {return nullptr;};
+    virtual llvm::Value *codegen() override;
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
@@ -315,7 +315,7 @@ public:
     If_stmtASTnode(ExprASTnode* expr, BlockASTnode* ifblock, BlockASTnode* elseblock) :
     Expr((expr)), Ifblock((ifblock)), Elseblock((elseblock)), Haselse(true) {}
 
-    virtual llvm::Value *codegen() override {return nullptr;};
+    virtual llvm::Value *codegen() override;
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };

@@ -9,7 +9,8 @@ int hello;
 
 int addition(int n, int m) {
     int result;
-    int wefwfe;
-    int resgwgergeult;
+
+    result = n + m;
+
     return result;
 }

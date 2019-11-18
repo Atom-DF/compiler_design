@@ -219,7 +219,7 @@ Value *Fun_DeclASTnode::codegen() {
 Value *BlockASTnode::codegen() {
     for (auto decl : Local_decl_list)
         decl->codegen();
-
+    cout << "about to do stmts\n";
     for (auto stmt : Stmt_list) {
         auto temp = stmt->codegen();
         if (stmt->return_stmt())
@@ -273,6 +273,60 @@ Value *While_stmtASTnode::codegen() {
     return nullptr;
 }
 
+Value *If_stmtASTnode::codegen() {
+    Value *ConditionVal = Expr->codegen();
+    if(!ConditionVal)
+        LogErrorSyntax("Coud not parse the condition inside the if statement.", string());
+
+    if(ConditionVal->getType() == Type::getInt32Ty(TheContext))
+        ConditionVal =  Builder.CreateICmpNE(ConditionVal, ConstantInt::get(TheContext, APInt(sizeof(int)*8,0)),"ifcond");
+    else if(ConditionVal->getType() == Type::getInt1Ty(TheContext))
+        ConditionVal =  Builder.CreateICmpNE(ConditionVal, ConstantInt::get(TheContext, APInt(1,0)),"ifcond");
+    else
+        ConditionVal = Builder.CreateFCmpONE(ConditionVal,ConstantFP::get(TheContext, APFloat(0.0f)),"ifcond");
+
+    Function *TheFunction = Builder.GetInsertBlock()->getParent();
+
+    BasicBlock *ThenBB = BasicBlock::Create(TheContext, "then", TheFunction);
+    BasicBlock *ElseBB = BasicBlock::Create(TheContext, "else");
+    BasicBlock *MergeBB = BasicBlock::Create(TheContext, "ifcont");
+
+    Builder.CreateCondBr(ConditionVal,ThenBB, ElseBB);
+
+    Builder.SetInsertPoint(ThenBB);
+
+    Value *ThenV = Ifblock->codegen();
+
+    if(!ThenV){
+        return nullptr;
+    }
+
+    Builder.CreateBr(MergeBB);
+    ThenBB = Builder.GetInsertBlock();
+
+    TheFunction->getBasicBlockList().push_back(ElseBB);
+    Builder.SetInsertPoint(ElseBB);
+
+    Value *ElseV = Elseblock->codegen();
+    if(!ElseV){
+        return nullptr;
+    }
+
+    Builder.CreateBr(MergeBB);
+    ElseBB = Builder.GetInsertBlock();
+
+    TheFunction->getBasicBlockList().push_back(MergeBB);
+    Builder.SetInsertPoint(MergeBB);
+
+    return nullptr;
+}
+
+Value *Expr_stmtASTnode::codegen() {
+    if (Empty)
+        return nullptr;
+    return Expr->codegen();
+}
+
 Value *UnaryASTnode::codegen() {
     Value *expr = Expr->codegen();
     if (!expr){
@@ -290,56 +344,87 @@ Value *UnaryASTnode::codegen() {
 }
 
 Value *BinaryASTnode::codegen() {
-    Value *left_expr = Left->codegen();
     Value *right_expr = Right->codegen();
-    if (!left_expr | !right_expr){
+    Value *left_expr = Left->codegen();
+    if (left_expr->getType() != right_expr->getType())
+        LogErrorSyntax("Error type mismatch.", Right->to_string("", false) + Left->to_string("", false));
+    if (!left_expr | !right_expr)
         return nullptr;
-    }
-    switch (Op.type){
+    if (left_expr->getType() == Type::getInt32Ty(TheContext) or left_expr->getType() == Type::getInt1Ty(TheContext))
+        switch (Op.type){
+            case PLUS:
+                return Builder.CreateAdd(left_expr,right_expr,"addtmp");
+            case MINUS:
+                return Builder.CreateSub(left_expr,right_expr,"subtmp");
+            case ASTERIX:
+                return Builder.CreateMul(left_expr,right_expr,"multmp");
+            case DIV:
+                return Builder.CreateSDiv(left_expr,right_expr,"divtmp");
+            case MOD:
+                return Builder.CreateSRem(left_expr,right_expr,"modtmp");
+            case LT:
+                return Builder.CreateICmpULT(left_expr,right_expr,"cmptmp");
+            case LE:
+                return Builder.CreateICmpULE(left_expr,right_expr,"cmptmp");
+            case GT:
+                return Builder.CreateICmpUGT(left_expr,right_expr,"cmptmp");
+            case GE:
+                return Builder.CreateICmpUGE(left_expr,right_expr,"cmptmp");
+            case EQ:
+                return Builder.CreateICmpEQ(left_expr,right_expr,"cmptmp");
+            case NE:
+                return Builder.CreateICmpNE(left_expr,right_expr,"cmptmp");
+            case AND:
+                return Builder.CreateAnd(left_expr,right_expr,"andtmp");
+            case OR:
+                return Builder.CreateOr(left_expr,right_expr,"ortmp");
+            case ASSIGN: {
+                Value *Val = Right->codegen();
+                auto ident = static_cast<IdentASTnode *>(Left);
+                if (!Val)
+                    LogErrorSyntax("Error calculating the expr to the right for ident: ", ident->Token.lexeme);
+                Value *Variable = Curr_scope[ident->Token.lexeme];
+
+                if (!Variable)
+                    LogErrorSyntax("Error variable not declared: ", ident->Token.lexeme);
+
+                Builder.CreateStore(Val, Variable);
+                return Val;
+            }
+            default:
+                LogErrorSyntax("Error could not find operator: ", Op.lexeme);
+        }
+    switch (Op.type) {
         case PLUS:
             return Builder.CreateFAdd(left_expr,right_expr,"addtmp");
         case MINUS:
             return Builder.CreateFSub(left_expr,right_expr,"subtmp");
         case ASTERIX:
             return Builder.CreateFMul(left_expr,right_expr,"multmp");
+        case DIV:
+            return Builder.CreateFDiv(left_expr,right_expr,"divtmp");
+        case MOD:
+            return Builder.CreateFRem(left_expr,right_expr,"modtmp");
         case LT:
-            left_expr = Builder.CreateFCmpULT(left_expr,right_expr,"cmptmp");
-            return Builder.CreateUIToFP(left_expr, Type::getFloatTy(TheContext), "booltmp");
+            return Builder.CreateFCmpULT(left_expr,right_expr,"cmptmp");
         case LE:
-            left_expr = Builder.CreateFCmpULE(left_expr,right_expr,"cmptmp");
-            return Builder.CreateUIToFP(left_expr, Type::getFloatTy(TheContext), "booltmp");
+            return Builder.CreateFCmpULE(left_expr,right_expr,"cmptmp");
         case GT:
-            left_expr = Builder.CreateFCmpUGT(left_expr,right_expr,"cmptmp");
-            return Builder.CreateUIToFP(left_expr, Type::getFloatTy(TheContext), "booltmp");
+            return Builder.CreateFCmpUGT(left_expr,right_expr,"cmptmp");
         case GE:
-            left_expr = Builder.CreateFCmpUGE(left_expr,right_expr,"cmptmp");
-            return Builder.CreateUIToFP(left_expr, Type::getFloatTy(TheContext), "booltmp");
+            return Builder.CreateFCmpUGE(left_expr,right_expr,"cmptmp");
         case EQ:
-            left_expr = Builder.CreateFCmpUEQ(left_expr,right_expr,"cmptmp");
-            return Builder.CreateUIToFP(left_expr, Type::getFloatTy(TheContext), "booltmp");
+            return Builder.CreateFCmpUEQ(left_expr,right_expr,"cmptmp");
         case NE:
-            left_expr = Builder.CreateFCmpUNE(left_expr,right_expr,"cmptmp");
-            return Builder.CreateUIToFP(left_expr, Type::getFloatTy(TheContext), "booltmp");
+            return Builder.CreateFCmpUNE(left_expr,right_expr,"cmptmp");
         case AND:
             return Builder.CreateAnd(left_expr,right_expr,"andtmp");
         case OR:
             return Builder.CreateOr(left_expr,right_expr,"ortmp");
-        case ASSIGN: {
-            Value *Val = Right->codegen();
-            if (!Val)
-                return nullptr;
-            auto ident = static_cast<IdentASTnode *>(Left);
-            Value *Variable = Curr_scope[ident->Token.lexeme];
-
-            if (!Variable)
-                LogErrorSyntax("Error variable not declared: ", ident->Token.lexeme);
-
-            Builder.CreateStore(Val, Variable);
-            return Val;
-        }
         default:
             LogErrorSyntax("Error could not find operator: ", Op.lexeme);
     }
+
     return nullptr;
 }
 

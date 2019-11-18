@@ -512,11 +512,11 @@ BlockASTnode* parser_else_stmt() {
     if (CurTok.type == ELSE)
         getNextToken();
     else {
-        vector<int> set{ COMMA, RBRA, SC };
+        vector<int> set{ SC, IDENT, MINUS, NOT, LPAR, INT_LIT, FLOAT_LIT, BOOL_LIT, IF, RETURN, LBRA, WHILE, RBRA };
         if (find(set.begin(), set.end(), CurTok.type) != set.end())
             return new BlockASTnode();
         else
-            LogError("Expected , a ) or ; tokens or an else stmt.");
+            LogError("Expected an else stmt, a new statement or the end of the funciton.");
     }
     return parser_block();
 
