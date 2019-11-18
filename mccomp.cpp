@@ -325,8 +325,16 @@ TOKEN getNextToken() {
     return CurTok = temp;
 }
 
-void LogError(std::string) {
+void LogError(const char* message) {
+    fprintf(stderr, "Syntax error occured at line: ( %i , %i ) the token was: %s \n", CurTok.lineNo, CurTok.columnNo, CurTok.lexeme.c_str());
+    fprintf(stderr, "%s", message);
+    exit(-1);
+}
 
+void LogErrorSyntax(const char* message, std::string lexeme) {
+    fprintf(stderr, "Semantic error occured when processing : %s\n", lexeme.c_str());
+    fprintf(stderr, "%s\n", message);
+    exit(-1);
 }
 
 void putBackToken(TOKEN tok) {
@@ -340,9 +348,11 @@ void putBackToken(TOKEN tok) {
 // Code Generation
 //===----------------------------------------------------------------------===//
 
-static LLVMContext TheContext;
-static IRBuilder<> Builder(TheContext);
-static unique_ptr <Module> TheModule;
+LLVMContext TheContext;
+IRBuilder<> Builder(TheContext);
+unique_ptr <Module> TheModule;
+map<string, Value*> global = map<string, Value*>();
+map<string, AllocaInst*> Curr_scope = map<string, AllocaInst*>();
 
 //===----------------------------------------------------------------------===//
 // AST Printer
@@ -385,9 +395,11 @@ int main(int argc, char **argv) {
     // Make the module, which holds all the code.
     TheModule = llvm::make_unique<Module>("mini-c", TheContext);
     // Run the parser now.
-    parser();
-    fprintf(stderr, "Parsing Finished\n");
+    auto ast = parser();
+    cout << ast->to_string("", true);
 
+    fprintf(stderr, "Parsing Finished\n");
+    Value* code = ast->codegen();
     //********************* Start printing final IR **************************
     // Print out all of the generated code into a file called output.ll
     auto Filename = "output.ll";
@@ -403,5 +415,6 @@ int main(int argc, char **argv) {
     //********************* End printing final IR ****************************
 
     fclose(pFile); // close the file that contains the code that was parsed
+    delete ast;
     return 0;
 }

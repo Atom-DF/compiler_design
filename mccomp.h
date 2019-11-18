@@ -7,7 +7,9 @@
 
 
 #include <queue>
+#include <stack>
 #include <iostream>
+#include "llvm/IR/IRBuilder.h"
 
 //===----------------------------------------------------------------------===//
 // Lexer
@@ -102,10 +104,20 @@ extern int lineNo, columnNo;
 extern TOKEN CurTok;
 extern std::deque <TOKEN> tok_buffer;
 
-extern void LogError(std::string);
+extern void LogError(const char* message);
+
+extern void LogErrorSyntax(const char* message, std::string lexeme);
 
 extern void putBackToken(TOKEN tok);
 
 TOKEN getNextToken();
+
+// IR generation code.
+
+extern llvm::LLVMContext TheContext;
+extern llvm::IRBuilder<> Builder;
+extern std::unique_ptr <llvm::Module> TheModule;
+extern std::map<std::string, llvm::Value*> global;
+extern std::map<std::string, llvm::AllocaInst*> Curr_scope;
 
 #endif //CODE_MCCOMP_H

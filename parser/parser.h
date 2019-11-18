@@ -97,6 +97,6 @@ std::vector<DeclASTnode*> parser_decl_list_();
 
 Decl_listASTnode* parser_decl_list();
 
-void parser();
+RootASTnode* parser();
 
 #endif //CODE_PARSER_H

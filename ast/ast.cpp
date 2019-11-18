@@ -176,7 +176,7 @@ string ExternASTnode::to_string(string prefix, bool last) const {
     temp += prefix;
     temp += (last ? "└──" : "├──" );
     temp += "Extern\n";
-    temp += Type->to_string(prefix + (last ? "    " : "│   "), false);
+    temp += Type_->to_string(prefix + (last ? "    " : "│   "), false);
     temp += Ident->to_string(prefix + (last ? "    " : "│   "), false);
     temp += Params->to_string(prefix + (last ? "    " : "│   "), true);
     return temp;
@@ -257,7 +257,7 @@ string Local_declASTnode::to_string(string prefix, bool last) const {
     temp += prefix;
     temp += (last ? "└──" : "├──" );
     temp += "Local_decl\n";
-    temp += Type->to_string(prefix + (last ? "    " : "│   "), false);
+    temp += Type_->to_string(prefix + (last ? "    " : "│   "), false);
     temp += Ident->to_string(prefix + (last ? "    " : "│   "), true);
     return temp;
 }
@@ -325,7 +325,7 @@ string Fun_DeclASTnode::to_string(string prefix, bool last) const {
     temp += prefix;
     temp += (last ? "└──" : "├──" );
     temp += "Fun_Decl\n";
-    temp += Type->to_string(prefix + (last ? "    " : "│   "), false);
+    temp += Type_->to_string(prefix + (last ? "    " : "│   "), false);
     temp += Ident->to_string(prefix + (last ? "    " : "│   "), false);
     temp += Params->to_string(prefix + (last ? "    " : "│   "), false);
     temp += Block->to_string(prefix + (last ? "    " : "│   "), true);
@@ -362,5 +362,16 @@ string Decl_listASTnode::to_string(string prefix, bool last) const {
 
     temp += Decl_list.at(Decl_list.size() - 1)->to_string(prefix + (last ? "    " : "│   "), true);
 
+    return temp;
+}
+
+string RootASTnode::to_string(std::string prefix, bool last) const {
+    string temp;
+    temp += prefix;
+    temp += (last ? "└──" : "├──" );
+    temp += "Root\n";
+    if (Externs)
+        temp += Extern->to_string(prefix + (last ? "    " : "│   "), false);
+    temp += Decl->to_string(prefix + (last ? "    " : "│   "), true);
     return temp;
 }

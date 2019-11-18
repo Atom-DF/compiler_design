@@ -34,7 +34,7 @@ public:
 
     virtual bool isEmpty() = 0;
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override {return nullptr;};
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
@@ -50,7 +50,7 @@ public:
 
     virtual bool isEmpty() override {return false;};
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override {return nullptr;};
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
@@ -62,7 +62,7 @@ public:
 
     virtual bool isEmpty() override {return true;};
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override {return nullptr;};
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
@@ -81,7 +81,7 @@ public:
 
     virtual bool isEmpty() override {return false;};
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override;
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
@@ -96,7 +96,7 @@ public:
 
     virtual bool isEmpty() override {return false;};
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override;
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
@@ -112,7 +112,7 @@ public:
 
     virtual bool isEmpty() override {return false;};
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override;
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
@@ -128,7 +128,7 @@ public:
 
     virtual bool isEmpty() override {return false;};
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override;
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
@@ -144,7 +144,7 @@ public:
 
     virtual bool isEmpty() override {return false;};
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override;
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
@@ -159,7 +159,7 @@ public:
 
     virtual bool isEmpty() override {return false;};
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override;
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
@@ -176,7 +176,7 @@ public:
     Ident_funASTnode(IdentASTnode* ident, std::vector<ExprASTnode*> arguments) :
     IdentASTnode(ident->Token), Arguments((arguments)), Hasargs(true) {}
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override;
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
@@ -184,77 +184,78 @@ public:
 // type
 class TypeASTnode : public ASTnode {
 public:
-    TypeASTnode() {}
+    TOKEN Token;
+    TypeASTnode(TOKEN token) : Token(token) {}
 
-//    virtual llvm::Value *codegen() override {};
+//    virtual llvm::Value *codegen() override {return nullptr;};
 //
 //    virtual std::string to_string(std::string prefix, bool last) const override;
 };
 
 // fun_type
 class Fun_TypeASTnode : public TypeASTnode {
-    TOKEN Token;
 public:
-    Fun_TypeASTnode(TOKEN token) : Token(token) {}
+    Fun_TypeASTnode(TOKEN token) : TypeASTnode(token) {}
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override {return nullptr;};
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
 
 // var_type
 class Var_TypeASTnode : public TypeASTnode {
-    TOKEN Token;
 public:
-    Var_TypeASTnode(TOKEN token) : Token(token) {}
+    Var_TypeASTnode(TOKEN token) : TypeASTnode(token) {}
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override {return nullptr;};
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
 
 // param
 class ParamASTnode : public ASTnode {
+public:
     TypeASTnode* Type;
     IdentASTnode* Ident;
 
-public:
     ParamASTnode(TypeASTnode* type, IdentASTnode* ident)
     : Type(type), Ident(ident) {}
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override {return nullptr;};
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
 
 // params
 class ParamsASTnode : public ASTnode {
+public:
     std::vector<ParamASTnode*> Params;
     bool Empty; // or void
     bool Isvoid;
 
-public:
     ParamsASTnode(bool empy_or_void) : Empty(empy_or_void), Isvoid(!empy_or_void) {}
 
     ParamsASTnode(std::vector<ParamASTnode*> params) :
     Params((params)), Empty(false), Isvoid(false) {}
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override {return nullptr;}
+
+    virtual llvm::Value *codegen(std::vector<llvm::Type *> *param_types);
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
 
 // externs
 class ExternASTnode : public ASTnode {
-    TypeASTnode* Type;
+    TypeASTnode* Type_;
     IdentASTnode* Ident;
     ParamsASTnode* Params;
 
 public:
     ExternASTnode(TypeASTnode* type, IdentASTnode* ident, ParamsASTnode* params) :
-    Type((type)), Ident((ident)), Params((params)) {}
+    Type_((type)), Ident((ident)), Params((params)) {}
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override;
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
@@ -266,7 +267,7 @@ class Extern_listASTnode : public ASTnode {
 public:
     Extern_listASTnode(std::vector<ExternASTnode*> extern_list) : Extern_list((extern_list)) {}
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override;
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
@@ -278,8 +279,12 @@ class StmtASTnode : public ASTnode {
 public:
     StmtASTnode() {}
 
-//    virtual llvm::Value *codegen() override {};
-//
+    virtual llvm::Value *codegen() override {return nullptr;};
+
+    bool return_stmt() {
+        return false;
+    }
+
 //    virtual std::string to_string(std::string prefix, bool last) const override;
 };
 
@@ -292,7 +297,7 @@ public:
 
     Expr_stmtASTnode(ExprASTnode* expr) : Expr((expr)) {}
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override {return nullptr;};
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
@@ -310,7 +315,7 @@ public:
     If_stmtASTnode(ExprASTnode* expr, BlockASTnode* ifblock, BlockASTnode* elseblock) :
     Expr((expr)), Ifblock((ifblock)), Elseblock((elseblock)), Haselse(true) {}
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override {return nullptr;};
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
@@ -323,7 +328,7 @@ public:
     While_stmtASTnode(ExprASTnode* expr, StmtASTnode* stmt) :
     Expr((expr)), Stmt((stmt)) {}
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override;
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
@@ -337,20 +342,25 @@ public:
 
     Return_stmtASTnode(ExprASTnode* expr) : Expr((expr)) {}
 
-    virtual llvm::Value *codegen() override {};
+//  Used in IR generation
+    bool return_stmt() {
+        return true;
+    }
+
+    virtual llvm::Value *codegen() override;
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
 
 // local_decl
 class Local_declASTnode : public ASTnode {
-    TypeASTnode* Type;
+    TypeASTnode* Type_;
     IdentASTnode* Ident;
 public:
     Local_declASTnode(TypeASTnode* type, IdentASTnode* ident) :
-    Type((type)), Ident((ident)) {}
+    Type_((type)), Ident((ident)) {}
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override;
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
@@ -366,7 +376,7 @@ public:
 
     BlockASTnode() : Empty(true) {}
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override;
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 
@@ -380,36 +390,37 @@ class DeclASTnode : public ASTnode {
 public:
     DeclASTnode() {}
 
-//    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override {return nullptr;};
 //
 //    virtual std::string to_string(std::string prefix, bool last) const override;
 };
 
 // fun_decl
 class Fun_DeclASTnode : public DeclASTnode {
-    TypeASTnode* Type;
+public:
+    TypeASTnode* Type_;
     IdentASTnode* Ident;
     ParamsASTnode* Params;
     BlockASTnode* Block;
 
-public:
     Fun_DeclASTnode(TypeASTnode* type, IdentASTnode* ident, ParamsASTnode* params, BlockASTnode* block) :
-    Type((type)), Ident((ident)), Params((params)), Block((block)) {}
+    Type_((type)), Ident((ident)), Params((params)), Block((block)) {}
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override;
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
 
 // var_decl
 class Var_DeclASTnode : public DeclASTnode {
+public:
     TypeASTnode* Type;
     IdentASTnode* Ident;
-public:
+
     Var_DeclASTnode(TypeASTnode* type, IdentASTnode* ident) :
     Type((type)), Ident((ident)) {}
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override;
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
@@ -421,7 +432,25 @@ class Decl_listASTnode : public ASTnode {
 public:
     Decl_listASTnode(std::vector<DeclASTnode*> decl_list) : Decl_list((decl_list)) {}
 
-    virtual llvm::Value *codegen() override {};
+    virtual llvm::Value *codegen() override;
+
+    virtual std::string to_string(std::string prefix, bool last) const override;
+};
+
+
+class RootASTnode : public ASTnode {
+    Extern_listASTnode* Extern;
+    Decl_listASTnode* Decl;
+    bool Externs = true;
+
+public:
+    RootASTnode(Extern_listASTnode* _extern, Decl_listASTnode* decl) :
+    Extern(_extern), Decl(decl) {}
+
+    RootASTnode(Decl_listASTnode* decl) :
+    Decl(decl), Externs(false) {}
+
+    virtual llvm::Value *codegen() override;
 
     virtual std::string to_string(std::string prefix, bool last) const override;
 };
