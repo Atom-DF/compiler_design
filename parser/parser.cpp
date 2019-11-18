@@ -281,6 +281,7 @@ ExprASTnode* parser_rval_not() {
 ExprASTnode* parser_rval_mul() {
     if (CurTok.type == NOT or CurTok.type == MINUS) {
         auto op = CurTok;
+        getNextToken();
         auto expr = parser_rval_mul();
         return new UnaryASTnode(op, expr);
     }

@@ -219,7 +219,6 @@ Value *Fun_DeclASTnode::codegen() {
 Value *BlockASTnode::codegen() {
     for (auto decl : Local_decl_list)
         decl->codegen();
-    cout << "about to do stmts\n";
     for (auto stmt : Stmt_list) {
         auto temp = stmt->codegen();
         if (stmt->return_stmt())
