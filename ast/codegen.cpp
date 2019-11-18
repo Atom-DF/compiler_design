@@ -33,18 +33,14 @@ using namespace llvm;
 using namespace llvm::sys;
 
 Type *Get_Type(TOKEN Tok){
-    if(Tok.type == INT_TOK){
+    if(Tok.type == INT_TOK)
         return Type::getInt32Ty(TheContext);
-    }
-    else if(Tok.type == BOOL_TOK){
+    else if(Tok.type == BOOL_TOK)
         return Type::getInt1Ty(TheContext);
-    }
-    else if(Tok.type == FLOAT_TOK){
+    else if(Tok.type == FLOAT_TOK)
         return Type::getFloatTy(TheContext);
-    }
-    else{
+    else
         return Type::getVoidTy(TheContext);
-    }
 }
 
 Constant *Default_Val(TOKEN varType){
@@ -236,6 +232,8 @@ Value *Local_declASTnode::codegen() {
         LogErrorSyntax("IR error, could not generate default value for type: ", Type_->Token.lexeme);
     Type *type = Get_Type(Type_->Token);
 
+    if (type == Type::getFloatTy(TheContext))
+        cout << "type checks out for:" << Ident->Token.lexeme;
 
     AllocaInst *alloca = CreateEntryBlockAlloca(function, Ident->Token.lexeme, type);
     Builder.CreateStore(default_value, alloca);
