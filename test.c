@@ -8,9 +8,9 @@ extern int print_int(void);
 int hello;
 
 int addition(int n, int m) {
-    int result;
+    float result;
 
-    result = n + m;
+    result = 3.1;
 
     return result;
 }

@@ -119,7 +119,7 @@ public:
 
 /// FloatASTnode - Class for float literals like 1.0, 0.22, 12.05.
 class FloatASTnode : public ExprASTnode {
-    double Val;
+    float Val;
     TOKEN Tok;
     std::string Name;
 

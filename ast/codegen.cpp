@@ -232,9 +232,6 @@ Value *Local_declASTnode::codegen() {
         LogErrorSyntax("IR error, could not generate default value for type: ", Type_->Token.lexeme);
     Type *type = Get_Type(Type_->Token);
 
-    if (type == Type::getFloatTy(TheContext))
-        cout << "type checks out for:" << Ident->Token.lexeme;
-
     AllocaInst *alloca = CreateEntryBlockAlloca(function, Ident->Token.lexeme, type);
     Builder.CreateStore(default_value, alloca);
 
