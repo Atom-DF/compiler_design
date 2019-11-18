@@ -336,7 +336,9 @@ Value *UnaryASTnode::codegen() {
         case NOT:
             return Builder.CreateNot(expr,"nottmp");
         case MINUS:
-            return Builder.CreateFNeg(expr, "negtmp");
+            if (expr->getType() == Type::getFloatTy(TheContext))
+                return Builder.CreateFNeg(expr, "negtmp");
+            return Builder.CreateNeg(expr, "negtmp");
         default:
             LogErrorSyntax("Invalid operator: ", Op.lexeme);
     }
@@ -346,10 +348,16 @@ Value *UnaryASTnode::codegen() {
 Value *BinaryASTnode::codegen() {
     Value *right_expr = Right->codegen();
     Value *left_expr = Left->codegen();
+    if (!left_expr | !right_expr)
+        LogErrorSyntax("Error in the codegen during this operation: ", Op.lexeme);
+    if ((left_expr->getType() == Type::getFloatTy(TheContext) && right_expr->getType() == Type::getInt32Ty(TheContext)))
+        right_expr = Builder.CreateSIToFP(right_expr,Type::getFloatTy(TheContext),"R");
+    else if(left_expr->getType() == Type::getInt32Ty(TheContext) && right_expr->getType() == Type::getFloatTy(TheContext))
+        left_expr = Builder.CreateSIToFP(left_expr,Type::getFloatTy(TheContext),"L");
+
     if (left_expr->getType() != right_expr->getType())
         LogErrorSyntax("Error type mismatch.", Right->to_string("", false) + Left->to_string("", false));
-    if (!left_expr | !right_expr)
-        return nullptr;
+
     if (left_expr->getType() == Type::getInt32Ty(TheContext) or left_expr->getType() == Type::getInt1Ty(TheContext))
         switch (Op.type){
             case PLUS:
